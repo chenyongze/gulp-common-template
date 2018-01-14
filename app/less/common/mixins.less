@@ -1,0 +1,37 @@
+.triangle(top, @width, @corlor) {
+    border: @width solid transparent;
+    border-bottom: @width solid @corlor;
+}
+
+.triangle(bottom, @width, @corlor) {
+    border: @width solid transparent;
+    border-top: @width solid @corlor;
+}
+
+@import 'variables';
+
+.triangle(left, @width, @corlor) {
+    border: @width solid transparent;
+    border-right: @width solid @corlor;
+}
+
+.triangle(right, @width, @corlor) {
+    border: @width solid transparent;
+    border-left: @width solid @corlor;
+}
+
+.triangle(@_, @width, @corlor) {
+    width: 0;
+    height: 0;
+}
+
+.center-layout {
+    margin: 0 auto;
+}
+
+.layout(@width, @height, @background:red) {
+    width: @width;
+    height: @height;
+    background: @background;
+    .center-layout;
+}
