@@ -16,6 +16,7 @@ var rev = require('gulp-rev');
 var revCollector = require('gulp-rev-collector');
 var browserSync = require('browser-sync').create();
 var gulpSequence = require('gulp-sequence');
+var fileinclude = require('gulp-file-include');
 
 var banner = '/*! <%= pkg.name %>-<%= pkg.version %> Generate by ' + new Date().toLocaleDateString() + '*/\n';
 
@@ -26,17 +27,17 @@ gulp.task('clean', function() {
 });
 
 gulp.task('less-dev', function() {
-	return gulp.src('app/less/*.less')
+	return gulp.src('src/less/*.less')
 		.pipe(less())
 		.pipe(autoprefixer('last 6 version'))
 		.pipe(csslint())
 		// 显示CSS警告或错误
 		.pipe(csslint.formatter())
-		.pipe(gulp.dest('app/css'));
+		.pipe(gulp.dest('src/css'));
 });
 
 gulp.task('less', function() {
-	return gulp.src('app/less/*.less')
+	return gulp.src('src/less/*.less')
 		.pipe(sourcemaps.init())
 		.pipe(less())
 		.pipe(autoprefixer('last 6 version'))
@@ -53,14 +54,14 @@ gulp.task('less', function() {
 });
 
 gulp.task('js-dev', function() {
-	return gulp.src('app/js/*.js')
+	return gulp.src('src/js/*.js')
 		.pipe(jshint())
 		.pipe(jshint.reporter('default'))
-		.pipe(gulp.dest('app/js'));
+		.pipe(gulp.dest('src/js'));
 });
 
 gulp.task('js', function() {
-	return gulp.src('app/js/*.js')
+	return gulp.src('src/js/*.js')
 		.pipe(sourcemaps.init())
 		.pipe(jshint())
 		.pipe(jshint.reporter('default'))
@@ -74,7 +75,7 @@ gulp.task('js', function() {
 });
 
 gulp.task('imagemin', function() {
-	return gulp.src('app/img/*')
+	return gulp.src('src/img/*')
 		// 取值范围：0-7（优化等级），级别越高，压缩次数越多，文件体积就可能越小，当然速度就越慢
 		.pipe(imagemin({ optimizationLevel: 3 }))
 		.pipe(rev())
@@ -84,12 +85,18 @@ gulp.task('imagemin', function() {
 });
 
 gulp.task('vendor', function() {
-	return gulp.src('app/vendor/**')
+	return gulp.src('src/vendor/**')
 		.pipe(gulp.dest('dist/vendor'));
 });
 
+gulp.task('html:include', function () {
+    return gulp.src('src/template/*.html')
+        .pipe(fileinclude())
+        .pipe(gulp.dest('app'));
+});
+
 gulp.task('html', function() {
-	return gulp.src(['rev/**/*.json', 'app/*.html'])
+	return gulp.src(['rev/**/*.json', 'src/*.html'])
 		.pipe(htmlmin({
 			collapseWhitespace: true,
 			removeComments: true,
@@ -122,23 +129,26 @@ gulp.task('bs', function() {
         files: "**",
         open: "external",
         server: {
-            baseDir: "app/",
+            baseDir: "src/",
             index: 'index.html',
         },
-        port: 8888,
+        port: 8889,
     });
 });
 
+// 调试
 gulp.task('default', function() {
 	gulp.run('bs');
 	gulp.run('clean');
-	gulp.watch('app/less/*/*.less', ['less-dev']);
-	gulp.watch('app/js/*.js', ['js-dev']);
-	gulp.watch('app/**').on('change', browserSync.reload);
+	gulp.watch('src/template/*.html', ['html:include']);
+	gulp.watch('src/less/*/*.less', ['less-dev']);
+	gulp.watch('src/js/*.js', ['js-dev']);
+	gulp.watch('src/**').on('change', browserSync.reload);
 	console.info(new Date().toLocaleTimeString() + ': Watching...');
 });
 
+// 发布
 gulp.task('production',
 	// 此插件除了方便控制任务顺序（前提是之前的每个任务都正常有return，否则无法控制任务顺序），还有并行执行的功能
-	gulpSequence('clean', 'less', 'js', 'imagemin', 'vendor', 'html', 'rev-css', 'rev-js')
+	gulpSequence('clean', 'less', 'js', 'imagemin', 'vendor', 'html:include','html', 'rev-css', 'rev-js')
 );
